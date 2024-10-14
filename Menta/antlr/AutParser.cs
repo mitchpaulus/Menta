@@ -278,28 +278,49 @@ public partial class AutParser : Parser {
 	}
 
 	public partial class Block_listContext : ParserRuleContext {
-		[System.Diagnostics.DebuggerNonUserCode] public BlockContext block() {
-			return GetRuleContext<BlockContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LBRACE() { return GetToken(AutParser.LBRACE, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public PageContext page() {
-			return GetRuleContext<PageContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RBRACE() { return GetToken(AutParser.RBRACE, 0); }
 		public Block_listContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
 		public override int RuleIndex { get { return RULE_block_list; } }
+	 
+		public Block_listContext() { }
+		public virtual void CopyFrom(Block_listContext context) {
+			base.CopyFrom(context);
+		}
+	}
+	public partial class NormalBlockContext : Block_listContext {
+		[System.Diagnostics.DebuggerNonUserCode] public BlockContext block() {
+			return GetRuleContext<BlockContext>(0);
+		}
+		public NormalBlockContext(Block_listContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override void EnterRule(IParseTreeListener listener) {
 			IAutListener typedListener = listener as IAutListener;
-			if (typedListener != null) typedListener.EnterBlock_list(this);
+			if (typedListener != null) typedListener.EnterNormalBlock(this);
 		}
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override void ExitRule(IParseTreeListener listener) {
 			IAutListener typedListener = listener as IAutListener;
-			if (typedListener != null) typedListener.ExitBlock_list(this);
+			if (typedListener != null) typedListener.ExitNormalBlock(this);
+		}
+	}
+	public partial class NestedBlockContext : Block_listContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LBRACE() { return GetToken(AutParser.LBRACE, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public PageContext page() {
+			return GetRuleContext<PageContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RBRACE() { return GetToken(AutParser.RBRACE, 0); }
+		public NestedBlockContext(Block_listContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAutListener typedListener = listener as IAutListener;
+			if (typedListener != null) typedListener.EnterNestedBlock(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAutListener typedListener = listener as IAutListener;
+			if (typedListener != null) typedListener.ExitNestedBlock(this);
 		}
 	}
 
@@ -312,6 +333,7 @@ public partial class AutParser : Parser {
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case NUMBERED:
+				_localctx = new NormalBlockContext(_localctx);
 				EnterOuterAlt(_localctx, 1);
 				{
 				State = 49;
@@ -319,6 +341,7 @@ public partial class AutParser : Parser {
 				}
 				break;
 			case LBRACE:
+				_localctx = new NestedBlockContext(_localctx);
 				EnterOuterAlt(_localctx, 2);
 				{
 				State = 50;

@@ -51,15 +51,29 @@ public interface IAutListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitPage([NotNull] AutParser.PageContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AutParser.block_list"/>.
+	/// Enter a parse tree produced by the <c>NormalBlock</c>
+	/// labeled alternative in <see cref="AutParser.block_list"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterBlock_list([NotNull] AutParser.Block_listContext context);
+	void EnterNormalBlock([NotNull] AutParser.NormalBlockContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AutParser.block_list"/>.
+	/// Exit a parse tree produced by the <c>NormalBlock</c>
+	/// labeled alternative in <see cref="AutParser.block_list"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitBlock_list([NotNull] AutParser.Block_listContext context);
+	void ExitNormalBlock([NotNull] AutParser.NormalBlockContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>NestedBlock</c>
+	/// labeled alternative in <see cref="AutParser.block_list"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNestedBlock([NotNull] AutParser.NestedBlockContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>NestedBlock</c>
+	/// labeled alternative in <see cref="AutParser.block_list"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNestedBlock([NotNull] AutParser.NestedBlockContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AutParser.stringList"/>.
 	/// </summary>

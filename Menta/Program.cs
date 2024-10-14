@@ -35,17 +35,16 @@ public class Program
 
         foreach (var blist in page.block_list())
         {
-            var block = blist.block();
-            if (block is not null)
+            if (blist is AutParser.NormalBlockContext nb)
             {
-                var left = block.INTEGER(0).GetText();
-                var top = block.INTEGER(1).GetText();
-                var header = block.DQUOTESTRING().GetText();
-                var blockType = block.BLOCK_DATA().GetText().Split(null)[0];
+                var left = nb.block().INTEGER(0).GetText();
+                var top = nb.block().INTEGER(1).GetText();
+                var header = nb.block().DQUOTESTRING().GetText();
+                var blockType = nb.block().BLOCK_DATA().GetText().Split(null)[0];
 
                 if (blockType == "COMENT")
                 {
-                    string fullBlockText = block.BLOCK_DATA().GetText();
+                    string fullBlockText = nb.block().BLOCK_DATA().GetText();
                     // Read from first colon to last '}'
                     int firstColon = fullBlockText.IndexOf(':');
                     int lastBrace = fullBlockText.LastIndexOf('}');
@@ -67,5 +66,144 @@ public class Program
 
         Console.Write(b.ToString());
         return 0;
+    }
+}
+
+public class Block
+{
+    public List<Block> InputBlocks = new();
+    public List<int> InputBlockPorts = new();
+    public string Number { get; set; }
+
+    public string Name { get; set; }
+
+    public List<Block> SubBlocks = new();
+
+    public string BlockData;
+
+    public Block(AutParser.BlockContext blockContext)
+    {
+        Name = blockContext.DQUOTESTRING().GetText().Substring(1, blockContext.DQUOTESTRING().GetText().Length - 2);
+        Number = blockContext.NUMBERED().GetText();
+        BlockData = blockContext.BLOCK_DATA().GetText();
+    }
+
+    public Block()
+    {
+        Name = "NULL";
+        Number = "0";
+        BlockData = "NULL";
+    }
+
+    public List<MentaType> Evaluate()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override string ToString()
+    {
+        return $"\"{Name}\" {BlockData} ({InputBlocks.Count})";
+    }
+}
+
+public class MentaType
+{
+
+}
+
+public class MentaListener : AutBaseListener
+{
+    private List<Block> Blocks = new();
+    private Dictionary<string, Block> NumberedLookup = new Dictionary<string, Block>();
+
+    private readonly Stack<Block> _parentBlocks = new ();
+
+    public MentaListener()
+    {
+    }
+
+    public override void EnterBlock(AutParser.BlockContext context)
+    {
+        Block b = new(context);
+
+        if (b.BlockData.StartsWith("COMENT")) return;
+
+        if (_parentBlocks.Count == 0)
+        {
+            Blocks.Add(b);
+        }
+        else
+        {
+            _parentBlocks.Peek().SubBlocks.Add(b);
+        }
+    }
+
+    public override void EnterNestedBlock(AutParser.NestedBlockContext context)
+    {
+        _parentBlocks.Push(Blocks.Last());
+    }
+
+    public override void ExitNestedBlock(AutParser.NestedBlockContext context)
+    {
+        _parentBlocks.Pop();
+    }
+
+    public override void EnterConnection(AutParser.ConnectionContext context)
+    {
+        int fromBlockInt = int.Parse(context.INTEGER(0).GetText());
+        int fromBlockPort = int.Parse(context.INTEGER(1).GetText());
+        var toConnections = context.connection_line().Connections();
+
+        if (_parentBlocks.Count > 0)
+        {
+            Block currentBlockContext = _parentBlocks.Peek();
+            Block fromBlock = currentBlockContext.SubBlocks[fromBlockInt - 1];
+
+            foreach (var toConnection in toConnections)
+            {
+                int toBlockInt = toConnection.Item1;
+                int toBlockPortInt = toConnection.Item2;
+
+                var toBlock = currentBlockContext.SubBlocks[toBlockInt - 1];
+
+                if (toBlockPortInt - 1 < toBlock.InputBlocks.Count)
+                {
+                    toBlock.InputBlocks[toBlockPortInt - 1] = fromBlock;
+                    toBlock.InputBlockPorts[toBlockPortInt - 1] = fromBlockPort;
+                }
+                else if (toBlockPortInt - 1 == toBlock.InputBlocks.Count)
+                {
+                    toBlock.InputBlocks.Add(fromBlock);
+                    toBlock.InputBlockPorts.Add(fromBlockPort);
+                }
+                else
+                {
+                    for (int i = 0; i < ((toBlockPortInt - 1) - toBlock.InputBlocks.Count) ; i++)
+                    {
+                        toBlock.InputBlocks.Add(new Block());
+                        toBlock.InputBlockPorts.Add(-1);
+                    }
+                    toBlock.InputBlocks.Add(fromBlock);
+                    toBlock.InputBlockPorts.Add(fromBlockPort);
+                }
+            }
+        }
+
+    }
+}
+
+public static class Extensions
+{
+    public static List<(int, int)> Connections(this AutParser.Connection_lineContext clContext)
+    {
+        if (clContext.connection_line() is null)
+        {
+            var xyPair = clContext.xy_pair().Last();
+            if (xyPair.PERIOD() is null) return new List<(int, int)>();
+
+            return new List<(int, int)>() { (int.Parse(xyPair.INTEGER(0).GetText()), int.Parse(xyPair.INTEGER(1).GetText())) };
+        }
+
+        return clContext.connection_line().SelectMany(connLine => connLine.Connections()).ToList();
     }
 }

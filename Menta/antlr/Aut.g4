@@ -103,8 +103,8 @@ file
 page : block_list+ connection+ blankConnection*;
 
 block_list 
-    : block
-    | LBRACE page RBRACE
+    : block # NormalBlock
+    | LBRACE page RBRACE # NestedBlock
     ;
 
 stringList : SQUOTESTRING (COMMA SQUOTESTRING)* ;
